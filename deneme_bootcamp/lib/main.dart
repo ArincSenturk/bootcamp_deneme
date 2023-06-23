@@ -1,9 +1,12 @@
 import 'package:deneme_bootcamp/login_screen.dart';
-import 'package:deneme_bootcamp/signup_screen.dart';
+
+
 import 'package:deneme_bootcamp/user_profile.dart';
 import 'package:deneme_bootcamp/vet_signup.screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+
+import 'signup_page.dart';
 
 
 void main() async {
@@ -80,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             ElevatedButton(onPressed:() {
               Navigator.push(context, MaterialPageRoute(builder: ((context) {
-                return RegisterPage();
+                return SignUpScreen();
               })));
             }, child: Text("kayıt"),  ),
             ElevatedButton(onPressed: () {

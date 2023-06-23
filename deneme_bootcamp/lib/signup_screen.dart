@@ -13,20 +13,27 @@ class _RegisterPageState extends State<RegisterPage> {
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _confirmPasswordController = TextEditingController();
+  TextEditingController _namesurnameController = TextEditingController();
+  List<Map<String, dynamic>> _pets = []; // Kullanıcının evcil hayvanlarını tutmak için liste
+
+  List<String> _vaccines = [
+    'Aşı 1',
+    'Aşı 2',
+    'Aşı 3',
+    // Diğer aşılar...
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Kayıt Ol'),
-      ),
-      body: Column(mainAxisAlignment: MainAxisAlignment.center,
+    return Center(
+    
+      child: Column(mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
             padding: EdgeInsets.all(20.0),
             child: Form(
               key: _formKey,
-              child: SafeArea(
+              
                 child: Column(
                   children: <Widget>[
                     Padding(
@@ -40,6 +47,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     SizedBox(height: 10,),
                     DecoratedBox(
+                      
                       decoration: BoxDecoration(color: Color.fromARGB(218, 177, 78, 195),borderRadius: BorderRadius.circular(12)),
                       child: Padding(
                         padding: const EdgeInsets.only(left:20.0),
@@ -54,8 +62,28 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     SizedBox(height: 10,),
+                    // Ad Soyad kısmı
+                    DecoratedBox(
+                      
+                      decoration: BoxDecoration(color: Color.fromARGB(218, 177, 78, 195),borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
+                         padding: const EdgeInsets.only(left:20.0),
+                        child: TextFormField(
+                          controller: _namesurnameController,
+                          decoration: InputDecoration(
+                            labelText: 'Ad Soyad',
+                            border: InputBorder.none
+                            ),
+                          
+                          
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10,),
                     // Parola kısmı
-                    DecoratedBox(decoration: BoxDecoration(color: Color.fromARGB(218, 177, 78, 195),borderRadius: BorderRadius.circular(12)),
+                    DecoratedBox(
+                      
+                      decoration: BoxDecoration(color: Color.fromARGB(218, 177, 78, 195),borderRadius: BorderRadius.circular(12)),
                       child: Padding(
                          padding: const EdgeInsets.only(left:20.0),
                         child: TextFormField(
@@ -71,7 +99,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     SizedBox(height: 10,),
                     //Parola  tekrar Kısmı
-                    DecoratedBox(
+                    DecoratedBox( 
                       decoration: BoxDecoration(color: Color.fromARGB(218, 177, 78, 195),borderRadius: BorderRadius.circular(12)) ,
                       child: Padding(
                         padding: const EdgeInsets.only(left:20.0),
@@ -86,6 +114,81 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
+                    SizedBox(height: 10,),
+                      ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: _pets.length,
+                    itemBuilder: (context, index) {
+                      final pet = _pets[index];
+                      List<String>? vaccines = pet['vaccines'] != null
+                          ? List<String>.from(pet['vaccines'])
+                          : <String>[];
+                      return Column(
+                        children: [
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Color.fromARGB(218, 177, 78, 195),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 20.0),
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  labelText: 'Evcil Hayvan Chip ID',
+                                  border: InputBorder.none,
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    pet['chipId'] = value;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            'Aşı Bilgileri',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Column(
+                            children: _vaccines.map((vaccine) {
+                              return CheckboxListTile(
+                                title: Text(vaccine),
+                                value: vaccines.contains(vaccine),
+                                onChanged: (value) {
+                                  setState(() {
+                                    if (value!) {
+                                      vaccines.add(vaccine);
+                                    } else {
+                                      vaccines.remove(vaccine);
+                                    }
+                                    pet['vaccines'] = vaccines;
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                          SizedBox(height: 10),
+                        ],
+                      );
+                    },
+                  ),
+
+                  // Evcil Hayvan Ekle Butonu
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _pets.add({
+                          'chipId': '',
+                          'vaccines': [],
+                        });
+                      });
+                    },
+                    child: Text('Evcil Hayvan Ekle'),
+                  ),
                     SizedBox(height: 20.0),
                     // Kayıt ol butonu
                     SizedBox(width: 345,height: 50,
@@ -106,7 +209,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ],
                 ),
-              ),
+              
             ),
           ),
         ],
@@ -125,12 +228,32 @@ class _RegisterPageState extends State<RegisterPage> {
     String uid = userCredential.user!.uid;
     DocumentReference userDocRef = FirebaseFirestore.instance.collection('users').doc(uid);
 
-    // Firestore dökümanını oluşturun
-    await userDocRef.set({
-      'email': userCredential.user!.email,
-      'isUser': 'true', // Kullanıcının adını veya diğer bilgileri buraya ekleyebilirsiniz
-    });
+    // Kullanıcının evcil hayvan bilgilerini oluşturun
+      List<Map<String, dynamic>> pets = [];
+      for (var pet in _pets) {
+        String chipId = pet['chipId'];
+        List<String>? vaccines = pet['vaccines'];
+        DocumentReference petDocRef =
+            FirebaseFirestore.instance.collection('pets').doc(chipId);
 
+        await petDocRef.set({
+          'chipId': chipId,
+          'vaccines': vaccines,
+        });
+
+        pets.add({
+          'chipId': chipId,
+        });
+      }
+      
+
+      // Firestore dökümanını oluşturun
+      await userDocRef.set({
+        'name' : _namesurnameController.text,
+        'email': userCredential.user!.email,
+        'isUser': true,
+        'pets': pets,
+      });
     } catch (e) {
       // Kayıt işlemi başarısız oldu.
       // Hata mesajını ekrana veya konsola yazdırabilirsiniz.
